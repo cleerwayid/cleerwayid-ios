@@ -4,12 +4,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "cleerwayid",
+    name: "Cleerwayid",
     products: [
-        .library(name: "cleerwayid", targets: ["cleerwayid"]),
+        .library(name: "Cleerwayid", targets: ["Cleerwayid"]),
     ],
     targets: [
-        .target(name: "cleerwayid"),
-        .testTarget(name: "cleerwayidTests", dependencies: ["cleerwayid"]),
+        .target(name: "Cleerwayid"),
+        .testTarget(name: "CleerwayidTests", dependencies: ["Cleerwayid"]),
     ]
 )
