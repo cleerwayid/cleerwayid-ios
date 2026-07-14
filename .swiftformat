@@ -4,7 +4,7 @@
 
 # Use 'swiftformat --options' to list all of the possible options
 
---header "\ncleerwayid\nCopyright © {created.year} Space Code. All rights reserved.\n//"
+--header "\ncleerwayid\nCopyright © {created.year} CleerwayID LLC. All rights reserved.\n//"
 
 --enable blankLinesBetweenScopes
 --enable blankLinesAtStartOfScope

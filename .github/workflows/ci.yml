@@ -1,64 +1,65 @@
-name: "cleerwayid"
+name: "cleerway"
 
 on:
   push:
     branches:
       - main
+    paths:
+      - '.swiftlint.yml'
+      - ".github/workflows/**"
+      - "Package.swift"
+      - "Sources/**"
+      - "Tests/**"
   pull_request:
     paths:
       - '.swiftlint.yml'
       - ".github/workflows/**"
       - "Package.swift"
-      - "Source/**"
+      - "Sources/**"
       - "Tests/**"
 
-jobs:
-  SwiftLint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: GitHub Action for SwiftLint
-        uses: norio-nomura/action-swiftlint@3.2.1
-        with:
-          args: --strict
-        env:
-          DIFF_BASE: ${{ github.base_ref }}
-  iOS:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.runsOn }}
-    env:
-      DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - destination: "OS=18.1,name=iPhone 16 Pro"
-            name: "iOS 18.1"
-            xcode: "Xcode_16.1"
-            runsOn: macOS-14
-          - destination: "OS=17.5,name=iPhone 15 Pro"
-            name: "iOS 17.5"
-            xcode: "Xcode_15.4"
-            runsOn: macOS-14
-          - destination: "OS=17.0.1,name=iPhone 14 Pro"
-            name: "iOS 17.0.1"
-            xcode: "Xcode_15.0"
-            runsOn: macos-13
-          - destination: "OS=16.4,name=iPhone 14 Pro"
-            name: "iOS 16.4"
-            xcode: "Xcode_14.3.1"
-            runsOn: macos-13
-    steps:
-      - uses: actions/checkout@v6
-      - name: ${{ matrix.name }}
-        run: xcodebuild test -scheme "cleerwayid" -destination "${{ matrix.destination }}" clean -enableCodeCoverage YES -resultBundlePath "test_output/${{ matrix.name }}.xcresult" || exit 1
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.name }}
-          path: test_output
+permissions:
+    contents: read
 
-  spm:
+concurrency:
+  group: cleerway-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  SCHEME_NAME: "cleerway"
+
+jobs:
+  test-apple-platforms:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runsOn }}
+    env:
+      DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+          # iOS
+          - { platform: iOS, name: "iOS 26.5", xcode: "Xcode_26.5", runsOn: macOS-26, destination: "OS=26.5,name=iPhone 17 Pro" }
+          - { platform: iOS, name: "iOS 18.1", xcode: "Xcode_16.1", runsOn: macOS-14, destination: "OS=18.1,name=iPhone 16 Pro" }
+          - { platform: iOS, name: "iOS 17.4", xcode: "Xcode_15.3", runsOn: macOS-14, destination: "OS=17.4,name=iPhone 15 Pro" }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Run tests - ${{ matrix.name }}
+        run: |
+          xcodebuild test \
+            -scheme "${{ env.SCHEME_NAME }}" \
+            -destination "${{ matrix.destination }}" \
+            -enableCodeCoverage YES \
+            -resultBundlePath "test_output/${{ matrix.name }}.xcresult" \
+            clean || exit 1
+      - name: Upload test coverage to Codecov
+        uses: space-code/oss-common-actions/.github/actions/upload_test_coverage_report@main
+        with:
+          scheme_name: ${{ env.SCHEME_NAME }}
+          filename: ${{ matrix.name }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+  spm-build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runsOn }}
     env:
@@ -68,44 +69,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "macOS 14, SPM 6.0.2 Test"
-            xcode: "Xcode_16.1"
-            runsOn: macOS-14
-          - name: "macOS 14, SPM 5.9.0 Test"
-            xcode: "Xcode_15.0"
-            runsOn: macos-14
-          - name: "macOS 13, SPM 5.8.1 Test"
-            xcode: "Xcode_14.3.1"
-            runsOn: macos-13
+          - { name: "macOS 26, SPM 6.2.0", xcode: "Xcode_26.1.1", runsOn: macOS-26 }
+          - { name: "macOS 15, SPM 6.0.2", xcode: "Xcode_16.0", runsOn: macOS-15 }
+          - { name: "macOS 14, SPM 6.0.2", xcode: "Xcode_16.1", runsOn: macOS-14 }
+          - { name: "macOS 14, SPM 5.10.0", xcode: "Xcode_15.3", runsOn: macOS-14 }
     steps:
-      - uses: actions/checkout@v6
-      - name: ${{ matrix.name }}
-        run: swift build -c release --target "cleerwayid"
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Build with Swift Package Manager - ${{ matrix.name }}
+        run: swift build -c release
+
   merge-test-reports:
-    needs: [iOS, macOS, watchOS, tvOS]
-    runs-on: macos-13
+    needs: test-apple-platforms
+    runs-on: macos-26
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
           path: test_output
+
       - run: xcrun xcresulttool merge test_output/**/*.xcresult --output-path test_output/final/final.xcresult
-      - name: Upload Merged Artifact
+  
+      - name: Upload merged test results
         uses: actions/upload-artifact@v7
         with:
-          name: MergedResult
+          name: MergedTestResults
           path: test_output/final
-
-  discover-typos:
-    name: Discover Typos
-    runs-on: macOS-13
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_14.1.app/Contents/Developer
-    steps:
-      - uses: actions/checkout@v6
-      - name: Discover typos
-        run: |
-          export PATH="$PATH:/Library/Frameworks/Python.framework/Versions/3.11/bin"
-          python3 -m pip install --upgrade pip
-          python3 -m pip install codespell
-          codespell --ignore-words-list="hart,inout,msdos,sur" --skip="./.build/*,./.git/*"
+          retention-days: 30
