@@ -6,6 +6,7 @@
 <a href="https://swiftpackageindex.com/cleerwayid/cleerwayid-ios"><img alt="Platform Compatibility" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcleerwayid%2Fcleerwayid-ios%2Fbadge%3Ftype%3Dplatforms"/></a> 
 <a href="https://github.com/cleerwayid/cleerwayid-ios/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/cleerwayid/cleerwayid-ios/actions/workflows/ci.yml/badge.svg?branch=main"></a>
 <a href="https://github.com/apple/swift-package-manager" alt="cleerwayid-ios on Swift Package Manager" title="cleerwayid-ios on Swift Package Manager"><img src="https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg" /></a>
+<a href="https://codecov.io/gh/cleerwayid/cleerwayid-ios" >  <img src="https://codecov.io/gh/cleerwayid/cleerwayid-ios/graph/badge.svg?token=U6Q49TGJWD"/>  </a>
 </p>
 
 ## Description
