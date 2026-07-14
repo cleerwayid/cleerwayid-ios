@@ -38,6 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        include:
           # iOS
           - { platform: iOS, name: "iOS 26.5", xcode: "Xcode_26.5", runsOn: macOS-26, destination: "OS=26.5,name=iPhone 17 Pro" }
           - { platform: iOS, name: "iOS 18.1", xcode: "Xcode_16.1", runsOn: macOS-14, destination: "OS=18.1,name=iPhone 16 Pro" }
