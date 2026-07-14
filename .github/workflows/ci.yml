@@ -22,11 +22,11 @@ permissions:
     contents: read
 
 concurrency:
-  group: cleerway-${{ github.head_ref }}
+  group: cleerwayid-${{ github.head_ref }}
   cancel-in-progress: true
 
 env:
-  SCHEME_NAME: "cleerway"
+  SCHEME_NAME: "cleerwayid"
 
 jobs:
   test-apple-platforms:
