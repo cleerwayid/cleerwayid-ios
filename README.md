@@ -30,4 +30,4 @@
 
 ## License
 
-cleerwayid-ios is released under the MIT license. See [LICENSE](LICENSE) for details.
+cleerwayid-ios is released under the Apache License 2.0. See [LICENSE](LICENSE) for details.
