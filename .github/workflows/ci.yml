@@ -1,0 +1,99 @@
+name: "cleerway"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.swiftlint.yml'
+      - ".github/workflows/**"
+      - "Package.swift"
+      - "Sources/**"
+      - "Tests/**"
+  pull_request:
+    paths:
+      - '.swiftlint.yml'
+      - ".github/workflows/**"
+      - "Package.swift"
+      - "Sources/**"
+      - "Tests/**"
+
+permissions:
+    contents: read
+
+concurrency:
+  group: cleerwayid-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  SCHEME_NAME: "Cleerwayid"
+
+jobs:
+  test-apple-platforms:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runsOn }}
+    env:
+      DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # iOS
+          - { platform: iOS, name: "iOS 26.5", xcode: "Xcode_26.5", runsOn: macOS-26, destination: "OS=26.5,name=iPhone 17 Pro" }
+          - { platform: iOS, name: "iOS 18.1", xcode: "Xcode_16.1", runsOn: macOS-14, destination: "OS=18.1,name=iPhone 16 Pro" }
+          - { platform: iOS, name: "iOS 17.4", xcode: "Xcode_15.3", runsOn: macOS-14, destination: "OS=17.4,name=iPhone 15 Pro" }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Run tests - ${{ matrix.name }}
+        run: |
+          xcodebuild test \
+            -scheme "${{ env.SCHEME_NAME }}" \
+            -destination "${{ matrix.destination }}" \
+            -enableCodeCoverage YES \
+            -resultBundlePath "test_output/${{ matrix.name }}.xcresult" \
+            clean || exit 1
+      - name: Upload test coverage to Codecov
+        uses: space-code/oss-common-actions/.github/actions/upload_test_coverage_report@main
+        with:
+          scheme_name: ${{ env.SCHEME_NAME }}
+          filename: ${{ matrix.name }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+  spm-build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runsOn }}
+    env:
+      DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: "macOS 26, SPM 6.2.0", xcode: "Xcode_26.1.1", runsOn: macOS-26 }
+          - { name: "macOS 15, SPM 6.0.2", xcode: "Xcode_16.0", runsOn: macOS-15 }
+          - { name: "macOS 14, SPM 6.0.2", xcode: "Xcode_16.1", runsOn: macOS-14 }
+          - { name: "macOS 14, SPM 5.10.0", xcode: "Xcode_15.3", runsOn: macOS-14 }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Build with Swift Package Manager - ${{ matrix.name }}
+        run: swift build -c release
+
+  merge-test-reports:
+    needs: test-apple-platforms
+    runs-on: macos-26
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: test_output
+
+      - run: xcrun xcresulttool merge test_output/**/*.xcresult --output-path test_output/final/final.xcresult
+  
+      - name: Upload merged test results
+        uses: actions/upload-artifact@v7
+        with:
+          name: MergedTestResults
+          path: test_output/final
+          retention-days: 30
