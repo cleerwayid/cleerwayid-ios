@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Miscellaneous Tasks
+- Add LICENSE
+  - Contributed by [@ns-vasilev](https://github.com/ns-vasilev) in Pull Request [#4](https://github.com/cleerwayid/cleerwayid-ios/pull/4).
 - Initialize project structure
   - Contributed by [@ns-vasilev](https://github.com/ns-vasilev) in Pull Request [#3](https://github.com/cleerwayid/cleerwayid-ios/pull/3).
 - Add renovate.json
